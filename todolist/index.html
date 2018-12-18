@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>ToDolist</title>
+	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+	<link rel="stylesheet" href="css/animate.css">
+	<link rel="stylesheet" href="css/bootstrap.css">
+	<script src="js/vue.js"></script>
+
+	<style>
+	li{list-style: none;}
+	*{padding:0; margin:0;}
+		body{
+			background-color: #ddd;
+			overflow-x:hidden; 
+		}
+		.wrap div:first-child {
+			background-color: #000;
+		}
+		.box,.bx{
+			width:600px;
+			margin: 0 auto;
+			position:relative;
+		}
+		header{
+			color:#fff;
+			line-height: 50px; 
+			font-size:24px;
+		}
+		header input{
+			width: 340px;
+			float:right;
+			font-size: 18px;
+			margin-top:12px;
+			height: 34px;
+			border-radius:5px;
+			text-indent:10px;
+			color:#333;
+		}
+		.box .btn-primary,.box .btn-danger{
+			float:right;
+			margin-top:12px;
+			height: 34px;
+			padding-top:0;
+			padding-bottom:0;
+			/*width: 115px;*/
+		}
+	
+		.zj input{
+			width: 24px;
+			height: 24px;
+			position:absolute;
+			left:10px;
+			margin:0;
+			margin-top:4px;
+		}
+		.zj p{
+			line-height: 34px;
+			background-color: #fff;
+			padding-left:38px;
+			font-size: 18px;
+			color:#000;
+		}
+		.zj ol li,.zj ul li{
+			height: 34px;
+			border-left: 5px solid #629A9C;
+			margin-bottom:15px;
+			position:relative;
+		}
+		.zj ul li{
+			border-left: 5px solid #eee;
+
+		}
+		.zj ol li b,.zj ul li b{
+			position:absolute;
+			right:5px;
+			bottom:10px;
+			cursor:pointer;
+			width: 20px;
+			height: 20px;
+			border-radius:50%;
+			background-color: #ddd;
+			color:#999;
+			text-align:center;
+		}
+		.zj ol li b:hover,.zj ul li b:hover{
+			background-color: #999;
+			color:#ddd;
+		}
+		.count{
+			position:absolute;
+			right:0;
+			width: 16px;
+			height: 16px;
+			border-radius:50%;
+			background-color: #666;
+			color:#fff;
+			font-size: 14px;
+			line-height: 16px;
+			text-align:center;
+		}
+	</style>
+</head>
+<body>
+	<div class="wrap">
+		<div>	
+			<div class="box">
+				<header>
+					<label for="">ToDoList</label>
+					<button class="btn btn-primary" @click="fn">添加</button>
+					<!-- <button v-if="!todo" class="btn btn-danger" disabled>没有添加ToDo</button> -->
+					<input type="text" placeholder="添加ToDo" v-model="todo" @keyup.13="fn">
+					
+				</header>
+			</div>
+		</div>
+		<div class="bx">
+			<mysection :libox="list" @remove="remove" @disable1="disable1"></mysection>
+			<mylist :libbx="list" @remove="remove"></mylist>
+
+		</div>	
+		
+	</div>
+</body>
+<script>
+	Vue.component("mysection",{
+		template:`<section class="zj">
+				<h2 class="hh">
+					正在进行
+					<span class="count">{{count}}</span>
+				</h2>
+					<h5 v-if="!count">目前没有代办的事情</h5>
+
+					<ol>
+						<transition-group enter-active-class="animated lightSpeedIn" leave-active-class="animated lightSpeedOut">
+
+							<li v-if="!i.sta" v-for="(i,index) of libox" :key="i.name">
+							<input type="checkbox" @click="disable1(index)">
+							<b @click="remove(index)">×</b>
+							<p>{{i.name}}</p>
+							</li>
+						</transition-group>
+					</ol>
+				</section>`,
+			
+				props:["libox"],
+				methods:{
+					remove(index){
+						this.$emit("remove",index)
+					},
+					disable1(index){
+						this.$emit("disable1",index)
+					}
+				},
+			
+				computed:{
+					count(){
+						var count=0;
+						for(let item of this.libox){
+							if(!item.sta){
+								count++;
+							}
+						}
+							return count;
+					}
+				}
+	})
+		Vue.component("mylist",{
+		template:`<section class="zj">
+				<h2 class="hh">
+					已完成
+					<span class="count">{{count}}</span>
+
+				</h2>
+					<h5 v-if="!count">目前完成的事情</h5>
+
+					<ul>
+						<transition-group enter-active-class="animated lightSpeedIn" leave-active-class="animated lightSpeedOut">
+							<li v-if="i.sta" v-for="(i,index) of libbx" :key="i.name" style="opacity:0.4">
+							<input type="checkbox" @click="disable1(index)" checked disabled>
+							<b @click="remove(index)">×</b>
+							<p>{{i.name}}</p>
+							</li>
+						</transition-group>
+					</ul>
+				</section>`,
+				data(){
+					return{
+					}
+				},
+				props:["libbx"],
+				methods:{
+					remove(index){
+						this.$emit("remove",index)
+					},
+					disable1(index){
+						this.$emit("disable1",index)
+					}
+				},
+			
+				computed:{
+					count(){
+						var count=0;
+						for(let item of this.libbx){
+							if(item.sta){
+								count++;
+							}
+						}
+							return count;
+					}
+				}
+	})
+	
+	window.onunload=function(){
+		localStorage.setItem("kes",JSON.stringify(root.list))
+	}
+		window.onload=function(){
+		root.list = JSON.parse(localStorage.getItem("kes"));
+	}
+	var root=new Vue({    
+		el:".wrap",
+		data:{
+			todo:"",
+			list:[],
+		},
+		methods:{
+				fn(){
+					var obj={
+						name:this.todo, 
+						sta:false
+					};
+					if(this.todo){
+						this.list.push(obj)	
+					}else{
+						alert("不能添加空内容")
+					}
+					this.todo=""
+				},
+				remove(index){
+					this.list.splice(index,1)
+				},
+				disable1(index){
+					this.list[index].sta=true
+				}
+
+		}
+
+	
+	})
+</script>
+</html>
